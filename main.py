@@ -43,13 +43,142 @@ def reverse_shells():
 
 def streisand():
     return
-
+### Starting with this function, start splitting the app up into multiple modules because large py files are really hard to handle, especially if they use the same variables
 def tsocks_proxychains():
     return
 
-def ufw_iptables():
-    return
 
+# UFW module
+#ufw insert 1 allow in from 10.0.0.1 port 443 to 10.0.0.0/24 port 4444 comment 'test'
+
+def get_allowdeny():
+    options = """Allow (in and out)
+    Allow (in)
+    Allow (out)
+    Deny (in and out)
+    Deny (in)
+    Deny (out)"""
+
+    menuparser(options)
+
+    opt_choice = int(raw_input("Enter a option (a number): "))
+
+    if opt_choice == 1:
+        allowdeny = "allow"
+    elif opt_choice == 2:
+        allowdeny = "allow in"
+    elif opt_choice == 3:
+        allowdeny = "allow out"
+    elif opt_choice == 4:
+        allowdeny = "deny"
+    elif opt_choice == 5:
+        allowdeny = "deny in"
+    elif opt_choice == 6:
+        allowdeny = "deny out"
+    else:
+        os.system('clear')
+        get_allowdeny()
+
+    print "Selected: ",allowdeny
+    return allowdeny
+
+
+def get_hostrange():
+    hostrange = str(raw_input("Enter the IP address of a single host, OR the CIDR range of the subnet (192.168.1.0/24 for example): ")).strip().rstrip()
+    print "DEBUG: ",hostrange
+    return hostrange
+def get_options():
+    protocol = ''
+    interface = ''
+    protocol = str(raw_input("Enter a protocol you wish to specify to block/allow (tcp or udp) or leave EMPTY: ")).strip().rstrip()
+    interface = str(raw_input("Enter a interface you wish to specify to block/allow (tcp or udp) or leave EMPTY: ")).strip().rstrip()
+
+    # proto tcp OR proto udp
+    if protocol != '' or None:
+        protocol_statement = "proto {}".format(str(protocol))
+    # on eth0 OR on wlan0
+    if interface != '' or None:
+        interface_statement = "on {}".format(str(interface))
+
+    options = "{} {}".format(
+        str(protocol_statement),
+        str(interface_statement)
+    )
+
+    print "DEBUG: ",options
+    return options
+
+def get_portrange():
+    portrange = str(raw_input("Enter the port(s) you wish to allow/block or LEAVE EMPTY: ")).strip().rstrip()
+    if portrange != '' or None:
+        portrange = "port {}".format(str(portrange))
+    print "DEBUG: ",portrange
+    return portrange
+def get_comments():
+    comments = str(raw_input("Enter any comments you would like to add or LEAVE EMPTY: ")).strip().rstrip()
+    if comments != '' or None:
+        comments = "'{}'".format(str(comments))
+    print "DEBUG: ",comments
+    return comments
+
+def ufw_run_queued_commands(ufw_queued_commands):
+    for line in ufw_queued_commands:
+        cmd = str(line.encode('utf-8')).rstrip().strip()
+        bash_cmd(cmd)
+    return
+def ufw_build_command_list(ufw_list_commands):
+    ufw_queued_commands = []
+    for command in ufw_list_commands:
+        ufw_queued_commands.append[command]
+    # resets the entire ufw table right before it runs the new commands
+    return ufw_queued_commands
+
+def ufw_add_statement():
+
+    # We are SUPPOSED TO make it where the user CHOOSES where on the table the rule goes. Usually it's ALLOW on the top and DENY on the bottom.
+    index = 1
+    ufw_list_commands = []
+    allowdeny = get_allowdeny()
+    from_hostrange = get_hostrange()
+    from_options = get_options()
+    from_portrange = get_portrange()
+    to_hostrange = get_hostrange()
+    to_options = get_options()
+    to_portrange = get_portrange()
+    comments = get_comments()
+    # lines = paragraph.splitlines()
+#{ufw_first_statement}
+
+# this needs to be fixed. The user is supposed to keep adding new lines until he says stop.
+
+    # This is the SECOND function. It'll read the first list of statements and run them in order
+    for line in lines:
+        ufw_command_2nd_half = """{} from {} {} {} to {} {} '{}'""".format(
+            str(allowdeny),
+            str(from_hostrange),
+            str(from_options),
+            str(from_portrange),
+            str(to_hostrange),
+            str(to_options),
+            str(to_portrange),
+            str(comments)
+        )
+        ufw_first_statement = "ufw insert {} ".format(str(index))
+        ufw_command = "{}{}".format(str(ufw_first_statement),str(ufw_command_2nd_half))
+        print "DEBUG: ",ufw_command
+        ufw_command = str(ufw_command.encode('utf-8')).strip().rstrip()
+        ufw_list_commands.append[ufw_command]
+        index += 1
+        return ufw_list_commands
+
+def ufw_iptables():
+    ufw_list_commands = ufw_add_statement()
+    ufw_queued_commands = ufw_build_command_list(ufw_list_commands)
+    bash_cmd("ufw reset")
+    ufw_run_queued_commands(ufw_queued_commands)
+    return ufw_list_commands
+
+# Routing module
 def get_gw():
     gw = str(raw_input("Enter the NAT-Gateway you are trying to reach: "))
     return gw
